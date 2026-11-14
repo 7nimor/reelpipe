@@ -32,6 +32,15 @@
         radial-gradient(900px 600px at -10% 110%, rgba(90, 140, 70, 0.18), transparent 50%),
         linear-gradient(160deg, #0b0d0a 0%, #151912 45%, #0e110d 100%);
       overflow-x: hidden;
+      transition: background 0.4s ease;
+    }
+
+    body.working {
+      background:
+        radial-gradient(900px 560px at 50% 18%, rgba(215, 255, 74, 0.22), transparent 58%),
+        radial-gradient(1200px 700px at 85% -10%, rgba(215, 255, 74, 0.12), transparent 55%),
+        radial-gradient(900px 600px at -10% 110%, rgba(90, 140, 70, 0.18), transparent 50%),
+        linear-gradient(160deg, #0b0d0a 0%, #151912 45%, #0e110d 100%);
     }
 
     body::before {
@@ -62,7 +71,7 @@
     .stage {
       width: min(820px, 100%);
       display: grid;
-      gap: 1.5rem;
+      gap: 1.35rem;
       justify-items: center;
       text-align: center;
       padding-top: 1.5rem;
@@ -113,7 +122,7 @@
       border: 0;
       cursor: pointer;
       margin-top: 0.2rem;
-      min-width: 220px;
+      min-width: 240px;
       padding: 1.05rem 2.4rem;
       border-radius: 999px;
       background: linear-gradient(180deg, var(--acid), var(--acid-deep));
@@ -124,6 +133,10 @@
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 40px rgba(215, 255, 74, 0.18);
       transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
       animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.16s both;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
     }
 
     .run:hover:not(:disabled) {
@@ -133,19 +146,142 @@
 
     .run:disabled {
       cursor: wait;
-      filter: saturate(0.7);
-      opacity: 0.75;
+      filter: saturate(0.85);
+      opacity: 0.95;
+      box-shadow: 0 0 0 1px rgba(215, 255, 74, 0.35), 0 0 28px rgba(215, 255, 74, 0.22);
+      animation: pulse-btn 1.4s ease-in-out infinite;
+    }
+
+    .spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(18, 21, 15, 0.25);
+      border-top-color: #12150f;
+      border-radius: 50%;
+      display: none;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .run:disabled .spinner { display: inline-block; }
+
+    .status-box {
+      width: 100%;
+      border: 1px solid transparent;
+      border-radius: 18px;
+      background: transparent;
+      padding: 0;
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.45s ease, opacity 0.35s ease, border-color 0.35s ease, padding 0.35s ease, background 0.35s ease;
+    }
+
+    .status-box.open {
+      max-height: 220px;
+      opacity: 1;
+      border-color: var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+      padding: 1rem 1.1rem 1.15rem;
     }
 
     .status {
       min-height: 1.5rem;
-      font-size: 0.95rem;
+      font-size: 1.02rem;
+      font-weight: 700;
       color: var(--mute);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
     }
 
     .status.busy { color: var(--acid); }
     .status.ok { color: var(--ok); }
     .status.err { color: var(--danger); }
+
+    .status .dot {
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 50%;
+      background: currentColor;
+      display: none;
+    }
+
+    .status.busy .dot {
+      display: inline-block;
+      animation: blink 1s ease-in-out infinite;
+    }
+
+    .progress {
+      margin-top: 0.85rem;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress > i {
+      display: block;
+      height: 100%;
+      width: 18%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, transparent, var(--acid), transparent);
+      animation: slide 1.2s ease-in-out infinite;
+    }
+
+    .progress.done > i {
+      width: 100%;
+      animation: none;
+      background: var(--ok);
+    }
+
+    .progress.fail > i {
+      width: 100%;
+      animation: none;
+      background: var(--danger);
+    }
+
+    .steps {
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.45rem;
+    }
+
+    .step {
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 0.55rem 0.35rem;
+      font-size: 0.78rem;
+      color: var(--mute);
+      transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease;
+    }
+
+    .step.active {
+      color: #12150f;
+      background: var(--acid);
+      border-color: var(--acid);
+      animation: step-glow 1.1s ease-in-out infinite;
+    }
+
+    .step.done {
+      color: var(--ok);
+      border-color: rgba(125, 255, 179, 0.35);
+      background: rgba(125, 255, 179, 0.08);
+    }
+
+    .live {
+      margin-top: 0.85rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.78rem;
+      color: var(--mute);
+      direction: ltr;
+      unicode-bidi: plaintext;
+      min-height: 1.2rem;
+      word-break: break-word;
+    }
 
     .board {
       width: 100%;
@@ -256,35 +392,45 @@
 
     .log div.err { color: var(--danger); }
     .log div.ok { color: var(--ok); }
+    .log div.fresh {
+      background: rgba(215, 255, 74, 0.08);
+      border-radius: 6px;
+      padding: 0.1rem 0.35rem;
+    }
 
-    .challenge {
+    .challenge, .session-box {
       display: none;
       gap: 0.85rem;
       padding: 1.1rem 1.15rem 1.2rem;
       text-align: right;
       animation: rise 0.35s ease both;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
     }
 
-    .challenge.open { display: grid; }
+    .challenge.open, .session-box.open { display: grid; }
 
-    .challenge h2 {
+    .challenge h2, .session-box h2 {
       font-size: 1rem;
       color: var(--wait);
     }
 
-    .challenge p {
+    .challenge p, .session-box p {
       color: var(--mute);
       font-size: 0.9rem;
       line-height: 1.6;
     }
 
-    .challenge-row {
+    .challenge-row, .session-row {
       display: flex;
       gap: 0.6rem;
       align-items: center;
     }
 
-    .challenge input {
+    .challenge input, .session-box input {
       flex: 1;
       appearance: none;
       border: 1px solid var(--line);
@@ -293,17 +439,17 @@
       border-radius: 12px;
       padding: 0.85rem 1rem;
       font-family: "IBM Plex Mono", monospace;
-      font-size: 1.05rem;
-      letter-spacing: 0.18em;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
       text-align: center;
       outline: none;
     }
 
-    .challenge input:focus {
+    .challenge input:focus, .session-box input:focus {
       border-color: var(--acid);
     }
 
-    .challenge button {
+    .challenge button, .session-box button {
       appearance: none;
       border: 0;
       cursor: pointer;
@@ -316,6 +462,13 @@
       white-space: nowrap;
     }
 
+    .session-flag {
+      font-size: 0.84rem;
+      color: var(--mute);
+    }
+
+    .session-flag.on { color: var(--ok); }
+
     @keyframes rise {
       from { opacity: 0; transform: translateY(18px); }
       to { opacity: 1; transform: translateY(0); }
@@ -325,8 +478,33 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.25; }
+    }
+
+    @keyframes slide {
+      0% { transform: translateX(-120%); }
+      100% { transform: translateX(620%); }
+    }
+
+    @keyframes pulse-btn {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.015); }
+    }
+
+    @keyframes step-glow {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.08); }
+    }
+
     @media (max-width: 760px) {
       .board { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr 1fr; }
       .run { width: 100%; }
       .challenge-row { flex-direction: column; }
       .challenge button { width: 100%; }
@@ -341,9 +519,25 @@
       <div class="meta-line">
         <p class="account" id="account">حساب: —</p>
         <p class="quota" id="quota">سهمیه امروز: —</p>
+        <p class="session-flag" id="sessionFlag">sessionid: تنظیم نشده</p>
       </div>
-      <button class="run" id="run" type="button">شروع</button>
-      <p class="status" id="status">آماده</p>
+      <button class="run" id="run" type="button">
+        <span class="spinner" aria-hidden="true"></span>
+        <span id="runLabel">شروع</span>
+      </button>
+
+      <div class="status-box" id="statusBox">
+        <p class="status" id="status"><span class="dot"></span><span id="statusText">آماده</span></p>
+        <div class="progress" id="progress"><i></i></div>
+        <div class="steps" id="steps">
+          <div class="step" data-step="vpn">وی‌پی‌ان</div>
+          <div class="step" data-step="fetch">دریافت</div>
+          <div class="step" data-step="download">دانلود</div>
+          <div class="step" data-step="login">لاگین</div>
+          <div class="step" data-step="upload">آپلود</div>
+        </div>
+        <p class="live" id="live">—</p>
+      </div>
 
       <div class="challenge" id="challenge">
         <h2>کد تأیید اینستاگرام</h2>
@@ -351,6 +545,19 @@
         <div class="challenge-row">
           <input id="challengeCode" type="text" inputmode="numeric" maxlength="8" placeholder="------" autocomplete="one-time-code" />
           <button type="button" id="challengeSend">ارسال کد</button>
+        </div>
+      </div>
+
+      <div class="session-box" id="sessionBox">
+        <h2>نیاز به sessionid</h2>
+        <p>
+          لاگین با پسورد برای این اکانت بسته شده.
+          برو اینستاگرام وب، لاگین کن، بعد از DevTools روی cookie به نام
+          <b>sessionid</b> کپی کن و اینجا بذار.
+        </p>
+        <div class="session-row">
+          <input id="sessionInput" type="text" placeholder="sessionid..." autocomplete="off" />
+          <button type="button" id="sessionSave">ذخیره و ادامه</button>
         </div>
       </div>
 
@@ -376,7 +583,13 @@
   </main>
   <script>
     const runBtn = document.getElementById("run");
+    const runLabel = document.getElementById("runLabel");
     const statusEl = document.getElementById("status");
+    const statusText = document.getElementById("statusText");
+    const statusBox = document.getElementById("statusBox");
+    const progressEl = document.getElementById("progress");
+    const liveEl = document.getElementById("live");
+    const stepEls = [...document.querySelectorAll(".step")];
     const logEl = document.getElementById("log");
     const logWrap = document.getElementById("logWrap");
     const accountEl = document.getElementById("account");
@@ -388,13 +601,70 @@
     const challengeHint = document.getElementById("challengeHint");
     const challengeCode = document.getElementById("challengeCode");
     const challengeSend = document.getElementById("challengeSend");
+    const sessionBox = document.getElementById("sessionBox");
+    const sessionInput = document.getElementById("sessionInput");
+    const sessionSave = document.getElementById("sessionSave");
+    const sessionFlag = document.getElementById("sessionFlag");
     let timer = null;
     let lastLen = 0;
     let challengeOpen = false;
+    let currentStep = "";
+
+    const stepOrder = ["vpn", "fetch", "download", "login", "upload"];
+
+    function detectStep(text) {
+      const t = (text || "").toLowerCase();
+      if (t.includes("testing:") || t.includes("using:") || t.includes("loaded ")) return "vpn";
+      if (t.includes("fetching:") || t.includes("skip (duplicate)") || t.includes("skip (not video)")) return "fetch";
+      if (t.includes("downloading:") || t.includes("no posts to download") || t.startsWith("/home/")) return "download";
+      if (t.includes("logged in") || t.includes("login via") || t.includes("session ") || t.includes("challenge:")) return "login";
+      if (t.includes("uploading:") || t.includes("caption:") || t.includes("thumbnail:") || t.startsWith("ok:") || t.startsWith("marked:") || t.startsWith("reel:") || t.includes("quota:")) return "upload";
+      return "";
+    }
+
+    function setStep(step) {
+      if (!step) return;
+      const index = stepOrder.indexOf(step);
+      if (index < 0) return;
+      currentStep = step;
+      stepEls.forEach((el) => {
+        const key = el.dataset.step;
+        const pos = stepOrder.indexOf(key);
+        el.classList.remove("active", "done");
+        if (pos < index) el.classList.add("done");
+        if (pos === index) el.classList.add("active");
+      });
+    }
+
+    function resetWorkUi() {
+      currentStep = "";
+      stepEls.forEach((el) => el.classList.remove("active", "done"));
+      progressEl.className = "progress";
+      liveEl.textContent = "—";
+      statusBox.classList.add("open");
+      document.body.classList.add("working");
+      runLabel.textContent = "در حال اجرا...";
+    }
+
+    function finishWorkUi(kind) {
+      document.body.classList.remove("working");
+      runLabel.textContent = "شروع";
+      runBtn.disabled = false;
+      progressEl.className = "progress " + (kind === "ok" ? "done" : kind === "err" ? "fail" : "");
+      stepEls.forEach((el) => {
+        if (kind === "ok") {
+          el.classList.remove("active");
+          el.classList.add("done");
+        } else {
+          el.classList.remove("active");
+        }
+      });
+    }
 
     function setStatus(text, kind) {
-      statusEl.textContent = text;
+      statusText.textContent = text;
       statusEl.className = "status" + (kind ? " " + kind : "");
+      statusBox.classList.add("open");
     }
 
     function renderList(el, items, kind) {
@@ -439,10 +709,31 @@
         const left = quota.left ?? Math.max(0, limit - used);
         quotaEl.innerHTML = "سهمیه امروز: <b>" + used + "/" + limit + "</b> — باقی‌مانده " + left;
         quotaEl.className = "quota" + (left <= 0 ? " full" : "");
+        if (data.sessionid_set) {
+          sessionFlag.textContent = "sessionid: آماده";
+          sessionFlag.className = "session-flag on";
+        } else {
+          sessionFlag.textContent = "sessionid: تنظیم نشده";
+          sessionFlag.className = "session-flag";
+        }
         renderList(pagesList, data.pages || [], "pages");
         renderList(pendingList, data.pending || [], "posts");
         renderList(uploadedList, data.uploaded || [], "posts");
       } catch (err) {}
+    }
+
+    function showSessionBox() {
+      sessionBox.classList.add("open");
+      sessionInput.focus();
+    }
+
+    function hideSessionBox() {
+      sessionBox.classList.remove("open");
+    }
+
+    function isUpgradeError(text) {
+      const t = (text || "").toLowerCase();
+      return t.includes("out of date") || t.includes("sessionid") || t.includes("بسته شد");
     }
 
     function appendLines(lines) {
@@ -452,9 +743,24 @@
         const row = document.createElement("div");
         const text = item.msg || "";
         row.textContent = text;
-        if (item.level === "error" || text.startsWith("Error:")) row.className = "err";
-        if (text.startsWith("ok:") || text.startsWith("marked:")) row.className = "ok";
+        row.classList.add("fresh");
+        if (item.level === "error" || text.startsWith("Error:")) row.classList.add("err");
+        if (text.startsWith("ok:") || text.startsWith("marked:") || text.startsWith("reel:")) row.classList.add("ok");
         logEl.appendChild(row);
+        liveEl.textContent = text;
+        const step = detectStep(text);
+        if (step) {
+          const labels = {
+            vpn: "در حال اتصال وی‌پی‌ان...",
+            fetch: "در حال گرفتن پست‌ها...",
+            download: "در حال دانلود...",
+            login: "در حال لاگین...",
+            upload: "در حال آپلود...",
+          };
+          setStep(step);
+          setStatus(labels[step] || "در حال اجرا...", "busy");
+        }
+        setTimeout(() => row.classList.remove("fresh"), 1200);
       }
       logEl.scrollTop = logEl.scrollHeight;
     }
@@ -468,6 +774,7 @@
         : "کد ۶ رقمی ایمیل یا پیامک را وارد کن";
       challengeCode.value = "";
       challengeCode.focus();
+      setStep("login");
       setStatus("منتظر کد تأیید...", "busy");
     }
 
@@ -483,27 +790,36 @@
         if (data.logs.length > lastLen) {
           appendLines(data.logs.slice(lastLen));
           lastLen = data.logs.length;
+          refreshStatus();
         }
         if (data.challenge && data.challenge.needed) {
           if (!challengeOpen) showChallenge(data.challenge);
-        } else if (challengeOpen) {
+        } else if (challengeOpen && !data.running) {
           hideChallenge();
         }
         if (!data.running) {
           clearInterval(timer);
           timer = null;
-          runBtn.disabled = false;
           hideChallenge();
           refreshStatus();
-          if (data.error) setStatus("خطا", "err");
-          else if (data.result) setStatus("آپلود شد: " + data.result, "ok");
-          else setStatus("تمام", "ok");
+          if (data.error) {
+            setStatus(isUpgradeError(data.error) ? "لاگین بسته شد — sessionid بگذار" : "خطا — جزئیات پایین", "err");
+            finishWorkUi("err");
+            if (isUpgradeError(data.error)) showSessionBox();
+          } else if (data.result) {
+            setStatus("آپلود شد: " + data.result, "ok");
+            finishWorkUi("ok");
+            hideSessionBox();
+          } else {
+            setStatus("تمام شد", "ok");
+            finishWorkUi("ok");
+          }
         }
       } catch (err) {
         clearInterval(timer);
         timer = null;
-        runBtn.disabled = false;
         setStatus("قطع ارتباط", "err");
+        finishWorkUi("err");
       }
     }
 
@@ -522,7 +838,7 @@
           setStatus(data.error || "ارسال کد ناموفق", "err");
           return;
         }
-        setStatus("کد ارسال شد...", "busy");
+        setStatus("کد ارسال شد، ادامه...", "busy");
       } catch (err) {
         setStatus("ارسال کد ناموفق", "err");
       } finally {
@@ -534,6 +850,36 @@
       if (event.key === "Enter") challengeSend.click();
     });
 
+    sessionSave.addEventListener("click", async () => {
+      const sessionid = sessionInput.value.trim();
+      if (!sessionid) return;
+      sessionSave.disabled = true;
+      try {
+        const res = await fetch("/api/sessionid", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionid }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus(data.error || "ذخیره sessionid ناموفق", "err");
+          return;
+        }
+        sessionInput.value = "";
+        hideSessionBox();
+        setStatus("sessionid ذخیره شد — دوباره شروع کن", "ok");
+        refreshStatus();
+      } catch (err) {
+        setStatus("ذخیره sessionid ناموفق", "err");
+      } finally {
+        sessionSave.disabled = false;
+      }
+    });
+
+    sessionInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") sessionSave.click();
+    });
+
     runBtn.addEventListener("click", async () => {
       if (runBtn.disabled) return;
       runBtn.disabled = true;
@@ -541,20 +887,24 @@
       lastLen = 0;
       logWrap.classList.add("open");
       hideChallenge();
-      setStatus("در حال اجرا...", "busy");
+      hideSessionBox();
+      resetWorkUi();
+      setStatus("شروع شد...", "busy");
+      setStep("vpn");
+      liveEl.textContent = "waiting for logs...";
       try {
         const res = await fetch("/api/run", { method: "POST" });
         const data = await res.json();
         if (!res.ok) {
           setStatus(data.error || "خطا", "err");
-          runBtn.disabled = false;
+          finishWorkUi("err");
           return;
         }
-        timer = setInterval(poll, 600);
+        timer = setInterval(poll, 500);
         poll();
       } catch (err) {
         setStatus("اجرا شروع نشد", "err");
-        runBtn.disabled = false;
+        finishWorkUi("err");
       }
     });
 

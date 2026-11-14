@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 from pipeline import run_pipeline
 from status_board import board
+from upload_latest import save_sessionid
 
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
@@ -153,6 +154,16 @@ class Handler(SimpleHTTPRequestHandler):
                     return
                 state["challenge_code"] = code
             challenge_event.set()
+            self._json(200, {"ok": True})
+            return
+        if path == "/api/sessionid":
+            data = self._read_json()
+            sessionid = str(data.get("sessionid") or "").strip()
+            try:
+                save_sessionid(sessionid)
+            except Exception as error:
+                self._json(400, {"error": str(error)})
+                return
             self._json(200, {"ok": True})
             return
         if path != "/api/run":

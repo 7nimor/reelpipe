@@ -70,22 +70,63 @@ def find_latest_video():
     return videos[-1]
 
 
-def load_credentials():
-    if not CREDENTIALS_FILE.exists():
-        raise RuntimeError(f"credentials file not found: {CREDENTIALS_FILE}")
+def read_credentials_map():
     data = {}
+    if not CREDENTIALS_FILE.exists():
+        return data
     for line in CREDENTIALS_FILE.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or ":" not in line:
             continue
         key, value = line.split(":", 1)
         data[key.strip().lower()] = value.strip()
+    return data
+
+
+def write_credentials_map(data):
+    order = ["username", "password", "code", "sessionid"]
+    lines = []
+    seen = set()
+    for key in order:
+        if key in data:
+            lines.append(f"{key}:{data.get(key, '')}")
+            seen.add(key)
+    for key, value in data.items():
+        if key not in seen:
+            lines.append(f"{key}:{value}")
+    CREDENTIALS_FILE.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def load_credentials():
+    data = read_credentials_map()
+    if not data:
+        raise RuntimeError(f"credentials file not found: {CREDENTIALS_FILE}")
     username = data.get("username", "").lstrip("@")
     password = data.get("password", "")
     code = data.get("code", "")
-    if not username or not password:
-        raise RuntimeError("username and password required in credentials.txt")
-    return username, password, code
+    sessionid = data.get("sessionid", "")
+    if not username:
+        raise RuntimeError("username required in credentials.txt")
+    if not password and not sessionid:
+        raise RuntimeError("password or sessionid required in credentials.txt")
+    return username, password, code, sessionid
+
+
+def save_sessionid(sessionid):
+    sessionid = (sessionid or "").strip().strip('"').strip("'")
+    if not sessionid:
+        raise RuntimeError("sessionid empty")
+    data = read_credentials_map()
+    data["sessionid"] = sessionid
+    if "username" not in data:
+        data["username"] = ""
+    if "password" not in data:
+        data["password"] = ""
+    if "code" not in data:
+        data["code"] = ""
+    write_credentials_map(data)
+    clear_session()
+    return True
 
 
 def load_max_uploads_per_day():
@@ -142,6 +183,10 @@ def make_client(code="", challenge_handler=None):
     client = Client()
     client.set_proxy(proxy_url())
     client.delay_range = [1, 3]
+    client.set_app()
+    client.set_country("US")
+    client.set_locale("en_US")
+    client.set_timezone_offset(-18000)
 
     def challenge_code_handler(username, choice):
         if challenge_handler:
@@ -164,17 +209,29 @@ def save_session(client, username):
     SESSION_ACCOUNT_FILE.write_text(username + "\n", encoding="utf-8")
 
 
-def login(client, username, password):
+def ensure_account(client, username):
+    if client.username and client.username.lstrip("@") != username:
+        clear_session()
+        raise RuntimeError(
+            f"logged in as @{client.username}, expected @{username}"
+        )
+
+
+def login(client, username, password, sessionid=""):
     saved = ""
     if SESSION_ACCOUNT_FILE.exists():
         saved = SESSION_ACCOUNT_FILE.read_text(encoding="utf-8").strip().lstrip("@")
     if SESSION_FILE.exists() and saved == username:
         try:
-            client.load_settings(SESSION_FILE)
-            client.login(username, password)
-            client.get_timeline_feed()
-            if client.username and client.username.lstrip("@") != username:
-                raise RuntimeError("session username mismatch")
+            client.load_settings(SESSION_FILE, override_app_version=True)
+            client.set_app()
+            if sessionid:
+                client.login_by_sessionid(sessionid)
+            elif password:
+                client.login(username, password)
+            else:
+                client.get_timeline_feed()
+            ensure_account(client, username)
             save_session(client, username)
             print(f"logged in: @{client.username or username}")
             return
@@ -185,12 +242,21 @@ def login(client, username, password):
         if SESSION_FILE.exists() and saved != username:
             print(f"session reset: {saved or 'unknown'} -> {username}")
         clear_session()
-    client.login(username, password)
-    if client.username and client.username.lstrip("@") != username:
-        clear_session()
-        raise RuntimeError(
-            f"logged in as @{client.username}, expected @{username}"
-        )
+    try:
+        if sessionid:
+            print("login via sessionid")
+            client.login_by_sessionid(sessionid)
+        else:
+            client.login(username, password)
+    except Exception as error:
+        message = str(error)
+        if "out of date" in message.lower() or "needs_upgrade" in message.lower():
+            raise RuntimeError(
+                "لاگین با پسورد توسط اینستاگرام بسته شد. "
+                "sessionid مرورگر را در UI یا credentials.txt بگذار."
+            ) from error
+        raise
+    ensure_account(client, username)
     save_session(client, username)
     print(f"logged in: @{client.username or username}")
 
@@ -286,14 +352,14 @@ def main():
         print(f"quota: {quota['used']}/{quota['limit']} today")
         video_path = find_latest_video()
         print(f"latest: {video_path}")
-        username, password, code = load_credentials()
+        username, password, code, sessionid = load_credentials()
         nodes = load_nodes()
         print(f"loaded {len(nodes)} nodes from FlClash")
         proc, names = start_mihomo(nodes)
         working = find_working_node(names)
         print(f"using: {working}")
         client = make_client(code)
-        login(client, username, password)
+        login(client, username, password, sessionid=sessionid)
         assert_upload_allowed()
         media = upload_video(client, video_path)
         media_code = getattr(media, "code", None) or getattr(media, "pk", None)

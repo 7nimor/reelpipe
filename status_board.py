@@ -1,18 +1,15 @@
 from latest_post import PAGES_FILE, load_pages, read_posts
-from upload_latest import CREDENTIALS_FILE, upload_quota
+from upload_latest import read_credentials_map, upload_quota
 
 
 def load_account():
-    if not CREDENTIALS_FILE.exists():
-        return ""
-    for line in CREDENTIALS_FILE.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        if key.strip().lower() == "username":
-            return value.strip().lstrip("@")
-    return ""
+    data = read_credentials_map()
+    return data.get("username", "").lstrip("@")
+
+
+def has_sessionid():
+    data = read_credentials_map()
+    return bool(data.get("sessionid", "").strip())
 
 
 def board():
@@ -46,4 +43,5 @@ def board():
         "pending": pending,
         "uploaded": uploaded,
         "quota": upload_quota(),
+        "sessionid_set": has_sessionid(),
     }

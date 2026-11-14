@@ -58,7 +58,7 @@ def run_pipeline(emit=print, challenge_handler=None):
     try:
         with redirect_stdout(stream):
             pages = load_pages()
-            username, password, code = load_credentials()
+            username, password, code, sessionid = load_credentials()
             nodes = load_nodes()
             print(f"loaded {len(nodes)} nodes from FlClash")
             proc, names = start_mihomo(nodes)
@@ -86,7 +86,7 @@ def run_pipeline(emit=print, challenge_handler=None):
                 print("nothing to upload")
                 return None
             client = make_client(code=code, challenge_handler=challenge_handler)
-            login(client, username, password)
+            login(client, username, password, sessionid=sessionid)
             for video_path in videos:
                 quota = upload_quota()
                 print(f"quota: {quota['used']}/{quota['limit']} today")
