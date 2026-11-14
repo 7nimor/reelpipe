@@ -1,5 +1,8 @@
 import json
+import socket
 import threading
+import urllib.error
+import urllib.request
 import webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -11,6 +14,7 @@ ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
 HOST = "127.0.0.1"
 PORT = 8765
+URL = f"http://{HOST}:{PORT}/"
 
 state_lock = threading.Lock()
 state = {
@@ -91,11 +95,30 @@ class Handler(SimpleHTTPRequestHandler):
         self._json(200, {"ok": True})
 
 
+def already_running():
+    try:
+        with urllib.request.urlopen(URL, timeout=1) as response:
+            return response.status == 200
+    except (urllib.error.URLError, TimeoutError, ConnectionError):
+        return False
+
+
+def port_busy():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        return sock.connect_ex((HOST, PORT)) == 0
+    finally:
+        sock.close()
+
+
 def main():
+    if already_running() or port_busy():
+        print(f"reelpipe already running: {URL}")
+        webbrowser.open(URL)
+        return
     server = ThreadingHTTPServer((HOST, PORT), Handler)
-    url = f"http://{HOST}:{PORT}/"
-    print(f"reelpipe: {url}")
-    threading.Timer(0.4, lambda: webbrowser.open(url)).start()
+    print(f"reelpipe: {URL}")
+    threading.Timer(0.4, lambda: webbrowser.open(URL)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
