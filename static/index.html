@@ -18,6 +18,7 @@
       --line: rgba(215, 255, 74, 0.18);
       --danger: #ff6b4a;
       --ok: #7dffb3;
+      --wait: #ffd56a;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,22 +55,23 @@
       z-index: 1;
       min-height: 100vh;
       display: grid;
-      place-items: center;
+      place-items: start center;
       padding: 2.5rem 1.25rem 3rem;
     }
 
     .stage {
-      width: min(720px, 100%);
+      width: min(820px, 100%);
       display: grid;
-      gap: 1.75rem;
+      gap: 1.5rem;
       justify-items: center;
       text-align: center;
+      padding-top: 1.5rem;
     }
 
     .brand {
       font-family: "Syne", sans-serif;
       font-weight: 800;
-      font-size: clamp(3.4rem, 12vw, 6.2rem);
+      font-size: clamp(3.2rem, 11vw, 5.8rem);
       letter-spacing: -0.04em;
       line-height: 0.9;
       color: #f4f7ea;
@@ -77,23 +79,40 @@
       animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
-    .brand span {
-      color: var(--acid);
-    }
+    .brand span { color: var(--acid); }
 
     .tag {
       max-width: 28rem;
       color: var(--mute);
-      font-size: 1.05rem;
+      font-size: 1.02rem;
       line-height: 1.7;
       animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.08s both;
     }
+
+    .meta-line {
+      display: grid;
+      gap: 0.35rem;
+      justify-items: center;
+      animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
+    }
+
+    .account, .quota {
+      color: var(--fog);
+      font-size: 0.92rem;
+    }
+
+    .account b, .quota b {
+      color: var(--acid);
+      font-weight: 600;
+    }
+
+    .quota.full b { color: var(--danger); }
 
     .run {
       appearance: none;
       border: 0;
       cursor: pointer;
-      margin-top: 0.4rem;
+      margin-top: 0.2rem;
       min-width: 220px;
       padding: 1.05rem 2.4rem;
       border-radius: 999px;
@@ -102,7 +121,6 @@
       font-family: "Vazirmatn", sans-serif;
       font-weight: 700;
       font-size: 1.15rem;
-      letter-spacing: 0.01em;
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 18px 40px rgba(215, 255, 74, 0.18);
       transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
       animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.16s both;
@@ -110,12 +128,7 @@
 
     .run:hover:not(:disabled) {
       transform: translateY(-2px) scale(1.02);
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 22px 50px rgba(215, 255, 74, 0.28);
       filter: brightness(1.05);
-    }
-
-    .run:active:not(:disabled) {
-      transform: translateY(1px) scale(0.99);
     }
 
     .run:disabled {
@@ -128,33 +141,100 @@
       min-height: 1.5rem;
       font-size: 0.95rem;
       color: var(--mute);
-      animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.22s both;
     }
 
     .status.busy { color: var(--acid); }
     .status.ok { color: var(--ok); }
     .status.err { color: var(--danger); }
 
-    .log-wrap {
+    .board {
       width: 100%;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      border: 1px solid transparent;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.9rem;
+      text-align: right;
+      animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+    }
+
+    .col {
+      border: 1px solid var(--line);
       border-radius: 18px;
       background: var(--panel);
       backdrop-filter: blur(10px);
+      padding: 0.95rem 0.95rem 0.75rem;
+      min-height: 180px;
+    }
+
+    .col h2 {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--acid);
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.02em;
+    }
+
+    .col ul {
+      list-style: none;
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .col li {
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--fog);
+      padding-bottom: 0.45rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .col li:last-child { border-bottom: 0; padding-bottom: 0; }
+
+    .col a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .col a:hover { color: var(--acid); }
+
+    .meta {
+      display: block;
+      margin-top: 0.15rem;
+      color: var(--mute);
+      font-size: 0.72rem;
+      font-family: "IBM Plex Mono", monospace;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .empty {
+      color: var(--mute);
+      font-size: 0.84rem;
+    }
+
+    .log-wrap, .challenge {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      backdrop-filter: blur(10px);
+    }
+
+    .log-wrap {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      border-color: transparent;
       transition: max-height 0.55s ease, opacity 0.4s ease, border-color 0.4s ease;
     }
 
     .log-wrap.open {
-      max-height: 360px;
+      max-height: 280px;
       opacity: 1;
       border-color: var(--line);
     }
 
     .log {
-      max-height: 360px;
+      max-height: 280px;
       overflow: auto;
       padding: 1rem 1.1rem;
       text-align: right;
@@ -177,6 +257,65 @@
     .log div.err { color: var(--danger); }
     .log div.ok { color: var(--ok); }
 
+    .challenge {
+      display: none;
+      gap: 0.85rem;
+      padding: 1.1rem 1.15rem 1.2rem;
+      text-align: right;
+      animation: rise 0.35s ease both;
+    }
+
+    .challenge.open { display: grid; }
+
+    .challenge h2 {
+      font-size: 1rem;
+      color: var(--wait);
+    }
+
+    .challenge p {
+      color: var(--mute);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .challenge-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .challenge input {
+      flex: 1;
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.28);
+      color: #f4f7ea;
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 1.05rem;
+      letter-spacing: 0.18em;
+      text-align: center;
+      outline: none;
+    }
+
+    .challenge input:focus {
+      border-color: var(--acid);
+    }
+
+    .challenge button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      border-radius: 12px;
+      padding: 0.85rem 1.2rem;
+      background: var(--acid);
+      color: #12150f;
+      font-family: "Vazirmatn", sans-serif;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
     @keyframes rise {
       from { opacity: 0; transform: translateY(18px); }
       to { opacity: 1; transform: translateY(0); }
@@ -186,8 +325,11 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 760px) {
+      .board { grid-template-columns: 1fr; }
       .run { width: 100%; }
+      .challenge-row { flex-direction: column; }
+      .challenge button { width: 100%; }
     }
   </style>
 </head>
@@ -196,8 +338,37 @@
     <section class="stage">
       <h1 class="brand">reel<span>pipe</span></h1>
       <p class="tag">پیدا کردن آخرین ریل، دانلود، و آپلود روی پیج خودت — همه در یک اجرا</p>
+      <div class="meta-line">
+        <p class="account" id="account">حساب: —</p>
+        <p class="quota" id="quota">سهمیه امروز: —</p>
+      </div>
       <button class="run" id="run" type="button">شروع</button>
       <p class="status" id="status">آماده</p>
+
+      <div class="challenge" id="challenge">
+        <h2>کد تأیید اینستاگرام</h2>
+        <p id="challengeHint">کد ۶ رقمی ایمیل یا پیامک را وارد کن</p>
+        <div class="challenge-row">
+          <input id="challengeCode" type="text" inputmode="numeric" maxlength="8" placeholder="------" autocomplete="one-time-code" />
+          <button type="button" id="challengeSend">ارسال کد</button>
+        </div>
+      </div>
+
+      <div class="board" id="board">
+        <section class="col">
+          <h2>پیج‌ها</h2>
+          <ul id="pagesList"><li class="empty">خالی</li></ul>
+        </section>
+        <section class="col">
+          <h2>در انتظار</h2>
+          <ul id="pendingList"><li class="empty">خالی</li></ul>
+        </section>
+        <section class="col">
+          <h2>آپلود شده</h2>
+          <ul id="uploadedList"><li class="empty">خالی</li></ul>
+        </section>
+      </div>
+
       <div class="log-wrap" id="logWrap">
         <div class="log" id="log"></div>
       </div>
@@ -208,12 +379,70 @@
     const statusEl = document.getElementById("status");
     const logEl = document.getElementById("log");
     const logWrap = document.getElementById("logWrap");
+    const accountEl = document.getElementById("account");
+    const quotaEl = document.getElementById("quota");
+    const pagesList = document.getElementById("pagesList");
+    const pendingList = document.getElementById("pendingList");
+    const uploadedList = document.getElementById("uploadedList");
+    const challengeBox = document.getElementById("challenge");
+    const challengeHint = document.getElementById("challengeHint");
+    const challengeCode = document.getElementById("challengeCode");
+    const challengeSend = document.getElementById("challengeSend");
     let timer = null;
     let lastLen = 0;
+    let challengeOpen = false;
 
     function setStatus(text, kind) {
       statusEl.textContent = text;
       statusEl.className = "status" + (kind ? " " + kind : "");
+    }
+
+    function renderList(el, items, kind) {
+      el.innerHTML = "";
+      if (!items.length) {
+        const empty = document.createElement("li");
+        empty.className = "empty";
+        empty.textContent = "خالی";
+        el.appendChild(empty);
+        return;
+      }
+      for (const item of items) {
+        const li = document.createElement("li");
+        if (kind === "pages") {
+          li.textContent = "@" + item;
+        } else {
+          const link = document.createElement("a");
+          link.href = item.url || "#";
+          link.target = "_blank";
+          link.rel = "noreferrer";
+          link.textContent = "@" + item.username;
+          const meta = document.createElement("span");
+          meta.className = "meta";
+          meta.textContent = item.shortcode + (item.fetched_at ? " · " + item.fetched_at : "");
+          li.appendChild(link);
+          li.appendChild(meta);
+        }
+        el.appendChild(li);
+      }
+    }
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch("/api/status");
+        const data = await res.json();
+        accountEl.innerHTML = data.account
+          ? 'حساب: <b>@' + data.account + '</b>'
+          : "حساب: —";
+        const quota = data.quota || {};
+        const used = quota.used ?? 0;
+        const limit = quota.limit ?? 3;
+        const left = quota.left ?? Math.max(0, limit - used);
+        quotaEl.innerHTML = "سهمیه امروز: <b>" + used + "/" + limit + "</b> — باقی‌مانده " + left;
+        quotaEl.className = "quota" + (left <= 0 ? " full" : "");
+        renderList(pagesList, data.pages || [], "pages");
+        renderList(pendingList, data.pending || [], "posts");
+        renderList(uploadedList, data.uploaded || [], "posts");
+      } catch (err) {}
     }
 
     function appendLines(lines) {
@@ -230,6 +459,23 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
+    function showChallenge(info) {
+      challengeOpen = true;
+      challengeBox.classList.add("open");
+      const choice = info.choice || "";
+      challengeHint.textContent = info.username
+        ? "کد ۶ رقمی برای @" + info.username + (choice ? " (" + choice + ")" : "") + " را وارد کن"
+        : "کد ۶ رقمی ایمیل یا پیامک را وارد کن";
+      challengeCode.value = "";
+      challengeCode.focus();
+      setStatus("منتظر کد تأیید...", "busy");
+    }
+
+    function hideChallenge() {
+      challengeOpen = false;
+      challengeBox.classList.remove("open");
+    }
+
     async function poll() {
       try {
         const res = await fetch("/api/logs");
@@ -238,10 +484,17 @@
           appendLines(data.logs.slice(lastLen));
           lastLen = data.logs.length;
         }
+        if (data.challenge && data.challenge.needed) {
+          if (!challengeOpen) showChallenge(data.challenge);
+        } else if (challengeOpen) {
+          hideChallenge();
+        }
         if (!data.running) {
           clearInterval(timer);
           timer = null;
           runBtn.disabled = false;
+          hideChallenge();
+          refreshStatus();
           if (data.error) setStatus("خطا", "err");
           else if (data.result) setStatus("آپلود شد: " + data.result, "ok");
           else setStatus("تمام", "ok");
@@ -254,12 +507,40 @@
       }
     }
 
+    challengeSend.addEventListener("click", async () => {
+      const code = challengeCode.value.trim();
+      if (!code) return;
+      challengeSend.disabled = true;
+      try {
+        const res = await fetch("/api/challenge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setStatus(data.error || "ارسال کد ناموفق", "err");
+          return;
+        }
+        setStatus("کد ارسال شد...", "busy");
+      } catch (err) {
+        setStatus("ارسال کد ناموفق", "err");
+      } finally {
+        challengeSend.disabled = false;
+      }
+    });
+
+    challengeCode.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") challengeSend.click();
+    });
+
     runBtn.addEventListener("click", async () => {
       if (runBtn.disabled) return;
       runBtn.disabled = true;
       logEl.innerHTML = "";
       lastLen = 0;
       logWrap.classList.add("open");
+      hideChallenge();
       setStatus("در حال اجرا...", "busy");
       try {
         const res = await fetch("/api/run", { method: "POST" });
@@ -276,6 +557,9 @@
         runBtn.disabled = false;
       }
     });
+
+    refreshStatus();
+    setInterval(refreshStatus, 4000);
   </script>
 </body>
 </html>

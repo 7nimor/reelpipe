@@ -15,12 +15,14 @@ from latest_post import (
     stop_mihomo,
 )
 from upload_latest import (
+    assert_upload_allowed,
     cleanup_video,
     find_latest_video,
     load_credentials,
     login,
     make_client,
     mark_uploaded,
+    upload_quota,
     upload_video,
 )
 
@@ -44,7 +46,7 @@ class LogStream:
             self._buf = ""
 
 
-def run_pipeline(emit=print):
+def run_pipeline(emit=print, challenge_handler=None):
     if not MIHOMO.exists():
         raise RuntimeError(f"mihomo not found at {MIHOMO}")
     if not FLCLASH_CONFIG.exists():
@@ -73,15 +75,22 @@ def run_pipeline(emit=print):
                 else:
                     print(url)
             download_all_posts()
+            quota = upload_quota()
+            print(f"quota: {quota['used']}/{quota['limit']} today")
+            if not quota["allowed"]:
+                print("skip upload: daily limit reached")
+                return None
             try:
                 video_path = find_latest_video()
             except RuntimeError:
                 print("nothing to upload")
                 return None
             print(f"latest: {video_path}")
-            client = make_client(code)
+            client = make_client(code=code, challenge_handler=challenge_handler)
             login(client, username, password)
+            assert_upload_allowed()
             media = upload_video(client, video_path)
+
             media_code = getattr(media, "code", None) or getattr(media, "pk", None)
             print(f"ok: {media_code}")
             shortcode = mark_uploaded(video_path)
