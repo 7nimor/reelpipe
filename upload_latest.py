@@ -13,8 +13,10 @@ from latest_post import (
     find_working_node,
     load_nodes,
     proxy_url,
+    read_posts,
     start_mihomo,
     stop_mihomo,
+    write_posts,
 )
 
 ROOT = Path(__file__).resolve().parent
@@ -23,10 +25,12 @@ CREDENTIALS_FILE = ROOT / "credentials.txt"
 CONFIG_FILE = ROOT / "config.txt"
 CAPTIONS_FILE = ROOT / "captions.txt"
 SESSION_FILE = ROOT / "session.json"
+SESSION_ACCOUNT_FILE = ROOT / "session.account"
 VIDEO_EXTS = {".mp4", ".mov", ".m4v"}
 DEFAULT_MAX_UPLOADS_PER_DAY = 3
 DEFAULT_CAPTION = (
-    "#طنز #خنده #جوک #فان #خنده_دار #میم #کمدی #طنزفارسی #خنده‌دار #شوخی"
+    "#طنز #خنده #جوک #فان #خنده_دار #میم #کمدی #طنزفارسی #خنده‌دار #شوخی "
+    "#ocean #اقیانوس #دریا"
 )
 
 
@@ -38,19 +42,16 @@ def shortcode_from_path(video_path):
 
 
 def uploaded_shortcodes():
-    if not POSTS_FILE.exists():
-        return set()
-    posts = json.loads(POSTS_FILE.read_text(encoding="utf-8"))
     return {
         post.get("shortcode")
-        for post in posts
+        for post in read_posts()
         if post.get("upload") and post.get("shortcode")
     }
 
 
-def find_latest_video():
+def find_pending_videos():
     if not DOWNLOADS_DIR.exists():
-        raise RuntimeError(f"downloads not found: {DOWNLOADS_DIR}")
+        return []
     done = uploaded_shortcodes()
     videos = [
         path
@@ -59,9 +60,14 @@ def find_latest_video():
         and path.suffix.lower() in VIDEO_EXTS
         and shortcode_from_path(path) not in done
     ]
+    return sorted(videos, key=lambda path: path.stat().st_mtime)
+
+
+def find_latest_video():
+    videos = find_pending_videos()
     if not videos:
         raise RuntimeError("no videos in downloads")
-    return max(videos, key=lambda path: path.stat().st_mtime)
+    return videos[-1]
 
 
 def load_credentials():
@@ -98,15 +104,9 @@ def load_max_uploads_per_day():
     return DEFAULT_MAX_UPLOADS_PER_DAY
 
 
-def load_posts_data():
-    if not POSTS_FILE.exists():
-        return []
-    return json.loads(POSTS_FILE.read_text(encoding="utf-8"))
-
-
 def uploads_today(posts=None):
     today = datetime.now().date().isoformat()
-    posts = posts if posts is not None else load_posts_data()
+    posts = posts if posts is not None else read_posts()
     count = 0
     for post in posts:
         if not post.get("upload"):
@@ -154,17 +154,45 @@ def make_client(code="", challenge_handler=None):
     return client
 
 
+def clear_session():
+    SESSION_FILE.unlink(missing_ok=True)
+    SESSION_ACCOUNT_FILE.unlink(missing_ok=True)
+
+
+def save_session(client, username):
+    client.dump_settings(SESSION_FILE)
+    SESSION_ACCOUNT_FILE.write_text(username + "\n", encoding="utf-8")
+
+
 def login(client, username, password):
-    if SESSION_FILE.exists():
+    saved = ""
+    if SESSION_ACCOUNT_FILE.exists():
+        saved = SESSION_ACCOUNT_FILE.read_text(encoding="utf-8").strip().lstrip("@")
+    if SESSION_FILE.exists() and saved == username:
         try:
             client.load_settings(SESSION_FILE)
             client.login(username, password)
             client.get_timeline_feed()
+            if client.username and client.username.lstrip("@") != username:
+                raise RuntimeError("session username mismatch")
+            save_session(client, username)
+            print(f"logged in: @{client.username or username}")
             return
-        except Exception:
-            pass
+        except Exception as error:
+            print(f"session reuse failed: {error}")
+            clear_session()
+    else:
+        if SESSION_FILE.exists() and saved != username:
+            print(f"session reset: {saved or 'unknown'} -> {username}")
+        clear_session()
     client.login(username, password)
-    client.dump_settings(SESSION_FILE)
+    if client.username and client.username.lstrip("@") != username:
+        clear_session()
+        raise RuntimeError(
+            f"logged in as @{client.username}, expected @{username}"
+        )
+    save_session(client, username)
+    print(f"logged in: @{client.username or username}")
 
 
 def make_thumbnail(video_path):
@@ -213,14 +241,15 @@ def upload_video(client, video_path):
         caption=caption,
         thumbnail=str(thumb),
     )
+    media_code = getattr(media, "code", None)
+    if media_code:
+        print(f"reel: https://www.instagram.com/reel/{media_code}/")
     return media
 
 
 def mark_uploaded(video_path):
     shortcode = shortcode_from_path(video_path)
-    if not POSTS_FILE.exists():
-        raise RuntimeError(f"posts file not found: {POSTS_FILE}")
-    posts = json.loads(POSTS_FILE.read_text(encoding="utf-8"))
+    posts = read_posts()
     found = False
     for post in posts:
         if post.get("shortcode") == shortcode:
@@ -230,10 +259,7 @@ def mark_uploaded(video_path):
             break
     if not found:
         raise RuntimeError(f"post not found for shortcode: {shortcode}")
-    POSTS_FILE.write_text(
-        json.dumps(posts, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    write_posts(posts)
     return shortcode
 
 

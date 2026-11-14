@@ -1,6 +1,4 @@
-import json
-
-from latest_post import PAGES_FILE, POSTS_FILE, load_pages
+from latest_post import PAGES_FILE, load_pages, read_posts
 from upload_latest import CREDENTIALS_FILE, upload_quota
 
 
@@ -17,12 +15,6 @@ def load_account():
     return ""
 
 
-def load_posts():
-    if not POSTS_FILE.exists():
-        return []
-    return json.loads(POSTS_FILE.read_text(encoding="utf-8"))
-
-
 def board():
     pages = []
     try:
@@ -34,7 +26,7 @@ def board():
                 for line in PAGES_FILE.read_text(encoding="utf-8").splitlines()
                 if line.strip() and not line.strip().startswith("#")
             ]
-    posts = load_posts()
+    posts = read_posts()
     pending = []
     uploaded = []
     for post in posts:

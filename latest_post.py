@@ -197,12 +197,29 @@ def load_pages():
     return pages
 
 
+def read_posts():
+    if not POSTS_FILE.exists():
+        return []
+    text = POSTS_FILE.read_text(encoding="utf-8").strip()
+    if not text:
+        return []
+    data = json.loads(text)
+    if not isinstance(data, list):
+        raise RuntimeError("posts.json must be a list")
+    return data
+
+
+def write_posts(posts):
+    POSTS_FILE.write_text(
+        json.dumps(posts, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 def save_post(username, url):
     username = username.lstrip("@")
     shortcode = url.rstrip("/").split("/")[-1]
-    posts = []
-    if POSTS_FILE.exists():
-        posts = json.loads(POSTS_FILE.read_text(encoding="utf-8"))
+    posts = read_posts()
     for post in posts:
         if post.get("shortcode") == shortcode:
             return None
@@ -213,10 +230,7 @@ def save_post(username, url):
         "fetched_at": datetime.now().isoformat(timespec="seconds"),
     }
     posts.append(entry)
-    POSTS_FILE.write_text(
-        json.dumps(posts, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    write_posts(posts)
     return entry
 
 

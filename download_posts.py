@@ -22,12 +22,9 @@ DOWNLOADS_DIR = Path(__file__).resolve().parent / "downloads"
 
 
 def load_posts():
-    if not POSTS_FILE.exists():
-        raise RuntimeError(f"posts file not found: {POSTS_FILE}")
-    posts = json.loads(POSTS_FILE.read_text(encoding="utf-8"))
-    if not posts:
-        raise RuntimeError("no posts in posts.json")
-    return posts
+    from latest_post import read_posts
+
+    return read_posts()
 
 
 def unescape_url(value):
@@ -151,6 +148,9 @@ def download_post(post):
 
 def download_all_posts():
     posts = load_posts()
+    if not posts:
+        print("no posts to download")
+        return
     DOWNLOADS_DIR.mkdir(parents=True, exist_ok=True)
     for post in posts:
         try:

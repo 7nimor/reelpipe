@@ -17,7 +17,7 @@ from latest_post import (
 from upload_latest import (
     assert_upload_allowed,
     cleanup_video,
-    find_latest_video,
+    find_pending_videos,
     load_credentials,
     login,
     make_client,
@@ -54,6 +54,7 @@ def run_pipeline(emit=print, challenge_handler=None):
 
     proc = None
     stream = LogStream(emit)
+    uploaded = []
     try:
         with redirect_stdout(stream):
             pages = load_pages()
@@ -80,23 +81,28 @@ def run_pipeline(emit=print, challenge_handler=None):
             if not quota["allowed"]:
                 print("skip upload: daily limit reached")
                 return None
-            try:
-                video_path = find_latest_video()
-            except RuntimeError:
+            videos = find_pending_videos()
+            if not videos:
                 print("nothing to upload")
                 return None
-            print(f"latest: {video_path}")
             client = make_client(code=code, challenge_handler=challenge_handler)
             login(client, username, password)
-            assert_upload_allowed()
-            media = upload_video(client, video_path)
-
-            media_code = getattr(media, "code", None) or getattr(media, "pk", None)
-            print(f"ok: {media_code}")
-            shortcode = mark_uploaded(video_path)
-            print(f"marked: {shortcode}")
-            cleanup_video(video_path)
-            return media_code
+            for video_path in videos:
+                quota = upload_quota()
+                print(f"quota: {quota['used']}/{quota['limit']} today")
+                if not quota["allowed"]:
+                    print("skip upload: daily limit reached")
+                    break
+                print(f"latest: {video_path}")
+                assert_upload_allowed()
+                media = upload_video(client, video_path)
+                media_code = getattr(media, "code", None) or getattr(media, "pk", None)
+                print(f"ok: {media_code}")
+                shortcode = mark_uploaded(video_path)
+                print(f"marked: {shortcode}")
+                cleanup_video(video_path)
+                uploaded.append(media_code)
+            return uploaded[-1] if uploaded else None
     finally:
         stream.flush()
         stop_mihomo(proc)
