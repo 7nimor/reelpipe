@@ -1,0 +1,105 @@
+import sys
+from contextlib import redirect_stdout
+
+from download_posts import download_all_posts
+from latest_post import (
+    FLCLASH_CONFIG,
+    MIHOMO,
+    find_working_node,
+    get_latest_post_url,
+    is_video_post,
+    load_nodes,
+    load_pages,
+    save_post,
+    start_mihomo,
+    stop_mihomo,
+)
+from upload_latest import (
+    cleanup_video,
+    find_latest_video,
+    load_credentials,
+    login,
+    make_client,
+    mark_uploaded,
+    upload_video,
+)
+
+
+class LogStream:
+    def __init__(self, emit):
+        self.emit = emit
+        self._buf = ""
+
+    def write(self, text):
+        self._buf += text
+        while "\n" in self._buf:
+            line, self._buf = self._buf.split("\n", 1)
+            line = line.rstrip()
+            if line:
+                self.emit(line)
+
+    def flush(self):
+        if self._buf.strip():
+            self.emit(self._buf.rstrip())
+            self._buf = ""
+
+
+def run_pipeline(emit=print):
+    if not MIHOMO.exists():
+        raise RuntimeError(f"mihomo not found at {MIHOMO}")
+    if not FLCLASH_CONFIG.exists():
+        raise RuntimeError("FlClash config not found")
+
+    proc = None
+    stream = LogStream(emit)
+    try:
+        with redirect_stdout(stream):
+            pages = load_pages()
+            username, password, code = load_credentials()
+            nodes = load_nodes()
+            print(f"loaded {len(nodes)} nodes from FlClash")
+            proc, names = start_mihomo(nodes)
+            working = find_working_node(names)
+            print(f"using: {working}")
+            for page in pages:
+                print(f"fetching: {page}")
+                url = get_latest_post_url(page)
+                if not is_video_post(url):
+                    print(f"skip (not video): {url}")
+                    continue
+                entry = save_post(page, url)
+                if entry is None:
+                    print(f"skip (duplicate): {url}")
+                else:
+                    print(url)
+            download_all_posts()
+            try:
+                video_path = find_latest_video()
+            except RuntimeError:
+                print("nothing to upload")
+                return None
+            print(f"latest: {video_path}")
+            client = make_client(code)
+            login(client, username, password)
+            media = upload_video(client, video_path)
+            media_code = getattr(media, "code", None) or getattr(media, "pk", None)
+            print(f"ok: {media_code}")
+            shortcode = mark_uploaded(video_path)
+            print(f"marked: {shortcode}")
+            cleanup_video(video_path)
+            return media_code
+    finally:
+        stream.flush()
+        stop_mihomo(proc)
+
+
+def main():
+    try:
+        run_pipeline()
+    except Exception as error:
+        print(f"Error: {error}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

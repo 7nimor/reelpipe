@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=reelpipe
+Comment=Fetch, download and upload Instagram reels
+Exec=/home/nima/Desktop/instagram/reelpipe.sh
+Icon=/home/nima/Desktop/instagram/reelpipe.png
+Path=/home/nima/Desktop/instagram
+Terminal=false
+Categories=Utility;AudioVideo;
+StartupNotify=true

@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.idea/
+downloads/
+credentials.txt
+session.json
+*.mp4
+*.mp4.jpg
