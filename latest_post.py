@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import subprocess
 import sys
@@ -12,9 +13,38 @@ from pathlib import Path
 import yaml
 from curl_cffi import requests
 
-FLCLASH_CONFIG = Path.home() / ".local/share/com.follow.clash/config.yaml"
 ROOT = Path(__file__).resolve().parent
-MIHOMO = ROOT / "bin" / "mihomo"
+
+
+def resolve_flclash_config():
+    candidates = [
+        Path.home() / ".local/share/com.follow.clash/config.yaml",
+    ]
+    appdata = os.environ.get("APPDATA")
+    if appdata:
+        candidates.append(Path(appdata) / "com.follow" / "clash" / "config.yaml")
+    for path in candidates:
+        if path.exists():
+            return path
+    if sys.platform == "win32" and appdata:
+        return Path(appdata) / "com.follow" / "clash" / "config.yaml"
+    return candidates[0]
+
+
+def resolve_mihomo():
+    bin_dir = ROOT / "bin"
+    if sys.platform == "win32":
+        candidates = [bin_dir / "mihomo.exe", bin_dir / "mihomo"]
+    else:
+        candidates = [bin_dir / "mihomo", bin_dir / "mihomo.exe"]
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
+
+
+FLCLASH_CONFIG = resolve_flclash_config()
+MIHOMO = resolve_mihomo()
 PAGES_FILE = ROOT / "pages.txt"
 POSTS_FILE = ROOT / "posts.json"
 PROXY_PORT = 17890

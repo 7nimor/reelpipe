@@ -4,6 +4,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import imageio_ffmpeg
 from instagrapi import Client
 
 from latest_post import (
@@ -261,13 +262,20 @@ def login(client, username, password, sessionid=""):
     print(f"logged in: @{client.username or username}")
 
 
+def resolve_ffmpeg():
+    local = ROOT / "bin" / ("ffmpeg.exe" if sys.platform == "win32" else "ffmpeg")
+    if local.exists():
+        return str(local)
+    return imageio_ffmpeg.get_ffmpeg_exe()
+
+
 def make_thumbnail(video_path):
     thumb = Path(str(video_path) + ".jpg")
     if thumb.exists():
         return thumb
     subprocess.check_call(
         [
-            "ffmpeg",
+            resolve_ffmpeg(),
             "-y",
             "-i",
             str(video_path),

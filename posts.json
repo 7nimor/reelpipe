@@ -3,12 +3,16 @@
     "username": "sea_memes_",
     "url": "https://www.instagram.com/reel/DXhg6qPCF9Y/",
     "shortcode": "DXhg6qPCF9Y",
-    "fetched_at": "2026-11-14T22:45:07"
+    "fetched_at": "2026-11-14T22:45:07",
+    "upload": true,
+    "uploaded_at": "2026-11-15T13:54:16"
   },
   {
     "username": "theflashmemes_0",
     "url": "https://www.instagram.com/reel/DGE7aG8S2mg/",
     "shortcode": "DGE7aG8S2mg",
-    "fetched_at": "2026-11-14T22:45:12"
+    "fetched_at": "2026-11-14T22:45:12",
+    "upload": true,
+    "uploaded_at": "2026-11-15T13:56:30"
   }
 ]
