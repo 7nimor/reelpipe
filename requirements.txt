@@ -2,3 +2,4 @@ curl_cffi
 pyyaml
 instagrapi[video]>=3.2.13
 moviepy==2.2.1
+tzdata

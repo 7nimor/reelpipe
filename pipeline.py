@@ -16,14 +16,18 @@ from latest_post import (
 )
 from upload_latest import (
     assert_upload_allowed,
+    boost_to_story,
     cleanup_video,
     find_pending_videos,
     load_credentials,
     login,
     make_client,
     mark_uploaded,
+    seed_first_comment,
     upload_quota,
     upload_video,
+    wait_for_peak_window,
+    wait_upload_gap,
 )
 
 
@@ -95,11 +99,16 @@ def run_pipeline(emit=print, challenge_handler=None):
                     break
                 print(f"latest: {video_path}")
                 assert_upload_allowed()
+                wait_for_peak_window()
+                wait_upload_gap()
+                assert_upload_allowed()
                 media = upload_video(client, video_path)
                 media_code = getattr(media, "code", None) or getattr(media, "pk", None)
                 print(f"ok: {media_code}")
                 shortcode = mark_uploaded(video_path)
                 print(f"marked: {shortcode}")
+                seed_first_comment(client, media)
+                boost_to_story(client, media)
                 cleanup_video(video_path)
                 uploaded.append(media_code)
             return uploaded[-1] if uploaded else None

@@ -618,7 +618,7 @@
       if (t.includes("fetching:") || t.includes("skip (duplicate)") || t.includes("skip (not video)")) return "fetch";
       if (t.includes("downloading:") || t.includes("no posts to download") || t.startsWith("/home/")) return "download";
       if (t.includes("logged in") || t.includes("login via") || t.includes("session ") || t.includes("challenge:")) return "login";
-      if (t.includes("uploading:") || t.includes("caption:") || t.includes("thumbnail:") || t.startsWith("ok:") || t.startsWith("marked:") || t.startsWith("reel:") || t.includes("quota:")) return "upload";
+      if (t.includes("uploading:") || t.includes("caption:") || t.includes("thumbnail:") || t.startsWith("ok:") || t.startsWith("marked:") || t.startsWith("reel:") || t.includes("quota:") || t.startsWith("gap:") || t.startsWith("peak:") || t.startsWith("story:") || t.startsWith("comment:") || t.startsWith("crop:")) return "upload";
       return "";
     }
 

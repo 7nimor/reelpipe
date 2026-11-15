@@ -1,1 +1,12 @@
 max_uploads_per_day:3
+upload_gap_minutes:90
+story_boost:1
+story_delay_seconds:45
+first_comment:1
+crop_watermark:1
+wait_for_peak:1
+peak_hours:18-23
+timezone:Asia/Tehran
+max_hashtags:5
+thumb_at_seconds:1
+niche:طنز
