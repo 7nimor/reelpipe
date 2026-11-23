@@ -693,7 +693,6 @@ def main():
         client = make_client(code)
         login(client, username, password, sessionid=sessionid)
         assert_upload_allowed()
-        wait_for_peak_window()
         wait_upload_gap()
         assert_upload_allowed()
         media = upload_video(client, video_path)

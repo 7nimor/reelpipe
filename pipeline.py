@@ -26,7 +26,6 @@ from upload_latest import (
     seed_first_comment,
     upload_quota,
     upload_video,
-    wait_for_peak_window,
     wait_upload_gap,
 )
 
@@ -91,26 +90,23 @@ def run_pipeline(emit=print, challenge_handler=None):
                 return None
             client = make_client(code=code, challenge_handler=challenge_handler)
             login(client, username, password, sessionid=sessionid)
-            for video_path in videos:
-                quota = upload_quota()
-                print(f"quota: {quota['used']}/{quota['limit']} today")
-                if not quota["allowed"]:
-                    print("skip upload: daily limit reached")
-                    break
-                print(f"latest: {video_path}")
-                assert_upload_allowed()
-                wait_for_peak_window()
-                wait_upload_gap()
-                assert_upload_allowed()
-                media = upload_video(client, video_path)
-                media_code = getattr(media, "code", None) or getattr(media, "pk", None)
-                print(f"ok: {media_code}")
-                shortcode = mark_uploaded(video_path)
-                print(f"marked: {shortcode}")
-                seed_first_comment(client, media)
-                boost_to_story(client, media)
-                cleanup_video(video_path)
-                uploaded.append(media_code)
+            video_path = videos[0]
+            queued = len(videos) - 1
+            print(f"latest: {video_path}")
+            if queued:
+                print(f"queue: {queued} left for later")
+            assert_upload_allowed()
+            wait_upload_gap()
+            assert_upload_allowed()
+            media = upload_video(client, video_path)
+            media_code = getattr(media, "code", None) or getattr(media, "pk", None)
+            print(f"ok: {media_code}")
+            shortcode = mark_uploaded(video_path)
+            print(f"marked: {shortcode}")
+            seed_first_comment(client, media)
+            boost_to_story(client, media)
+            cleanup_video(video_path)
+            uploaded.append(media_code)
             return uploaded[-1] if uploaded else None
     finally:
         stream.flush()
